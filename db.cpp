@@ -239,10 +239,8 @@ Status File::allocatePage(int& pageNo)
 {
   Page header;
   Status status;
-
   if ((status = intread(0, &header)) != OK)
     return status;
-
   // If free list has pages on it, take one from there
   // and adjust free list accordingly.
 

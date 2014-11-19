@@ -133,11 +133,11 @@ const Status BufMgr::allocBuf(int & frame)
 const Status BufMgr::readPage(File* file, const int PageNo, Page*& page)
 {
     // check to see if it is already in the buffer pool
-    // cout << "readPage called on file.page " << file << "." << PageNo << endl;
+     //cout << "readPage called on file.page " << file << "." << PageNo << endl;
     int frameNo = 0;
     Status status = hashTable->lookup(file, PageNo, frameNo);
     if (status == OK)
-    {
+    {	
         // set the referenced bit
         bufTable[frameNo].refbit = true;
         bufTable[frameNo].pinCnt++;

@@ -66,6 +66,12 @@ int main(int argc, char **argv)
 
     cout << "Start an insert scan which will have the side effect of opening dummy.02 " << endl;
     iScan = new InsertFileScan("dummy.02", status);
+
+#ifdef DEBUGBUF
+	bufMgr->printSelf();
+#endif
+
+
     for(i = 0; i < num; i++) {
         sprintf(rec1.s, "This is record %05d", i);
         rec1.i = i;
@@ -80,11 +86,14 @@ int main(int argc, char **argv)
 		//printf("next rid (%d.%d)\n",ridArray[i].pageNo, ridArray[i].slotNo);
 
         if (status != OK) 
-        {
+        {	//bufMgr->printSelf();
             cout << "got err0r status return from insertrecord" << endl;
             cout << "inserted " << i << "records into file dummy1 before error " 
                  << endl;
             error.print(status);
+#ifdef DEBUGBUF
+	bufMgr->printSelf();
+#endif
             exit(1);
         }
     }
@@ -94,6 +103,8 @@ int main(int argc, char **argv)
 
     cout << "inserted " << num << " records into file dummy.02 successfully" << endl;
     cout << endl;
+
+cout<<"------------------------------------insert part-------------------------------------\n";
 
     cout << endl;
     cout << "pull 11th record from file dummy.02 using file->getRecord() " << endl;
@@ -120,6 +131,9 @@ int main(int argc, char **argv)
 		}
 		cout << "getRecord() tests passed successfully" << endl;
     }
+#ifdef debug
+	bufMgr->printSelf();
+#endif
     delete file1;
 
     // scan the file sequentially checking that each record was stored properly
@@ -153,6 +167,7 @@ int main(int argc, char **argv)
     delete scan1;
     scan1 = NULL;
 
+cout<<"--------------------------------------first scan success-------------------------------\n";
 
 	// scan the file sequentially checking that each record was stored properly
     cout << endl << "scan file dummy.02 " << endl;
@@ -254,6 +269,8 @@ int main(int argc, char **argv)
     delete scan1;
     scan1 = NULL;
 
+cout<<"-------------------------------------ABOVE SOUNDS CORRECT--------------------------------\n";
+
 
     cout << endl;
     cout << "scan file, counting number of remaining records" << endl;
@@ -277,6 +294,7 @@ int main(int argc, char **argv)
             }
             i++;
         }
+	//cout<<i<<endl;exit(1);
         // subtract first record
         i--;
 
@@ -287,11 +305,12 @@ int main(int argc, char **argv)
 
         scan1 = new HeapFileScan("dummy.02", status);
         scan1->startScan(0, 0, STRING, NULL, EQ);
-
+//exit(1);
         // delete the rest (should only be one)
         while ((status = scan1->scanNext(rec2Rid)) != FILEEOF)
         {
-            status = scan1->deleteRecord();
+		cout<<rec2Rid.pageNo<<", "<<rec2Rid.slotNo<<endl;	    
+	    status = scan1->deleteRecord();
             if ((status != OK) && ( status != NORECORDS))
             {
                 cout << "err0r status return from deleteRecord" << endl;
@@ -308,9 +327,8 @@ int main(int argc, char **argv)
             cout << "Err0r.   scan should have returned " << (num+1) / 2
                  << " records!" << endl;
     }
-	
-		
-
+			
+exit(1);
 
     status = destroyHeapFile("dummy.02");
     if (status != OK) 

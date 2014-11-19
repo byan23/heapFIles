@@ -55,7 +55,7 @@ const Status Page::insertRecord(const Record & rec, RID& rid)
 {
     RID tmpRid;
     int spaceNeeded = rec.length + sizeof(slot_t);
-
+//	cout<<spaceNeeded<<", "<<freeSpace<<endl;
     // Start by checking if sufficient space exists
     // This is an upper bound check. may not actually need a slot
     // if we can find an empty one
@@ -110,7 +110,7 @@ const Status Page::insertRecord(const Record & rec, RID& rid)
 const Status Page::deleteRecord(const RID & rid)
 {
     int	slotNo = -rid.slotNo;   // convert to negative format
-
+cout<<slotNo<<", "<<slotCnt<<", "<<slot[slotNo].length<<endl;
     // first check if the record being deleted is actually valid
     if ((slotNo > slotCnt) && (slot[slotNo].length > 0))
     {
