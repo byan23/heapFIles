@@ -49,8 +49,12 @@ const Status createHeapFile(const string fileName)
 	if(status != OK) return status;
 	//cout<<"unpin data page success\n";
 	//close the file
+	//flush the freshly created file to disk
+	status = bufMgr->flushFile(file);
+	if(status != OK) return status;
 	return (db.closeFile(file));
     }
+
     status = db.closeFile(file);
     if(status != OK) return status;			//return error if not closed properly
     return (FILEEXISTS);
@@ -74,13 +78,14 @@ HeapFile::HeapFile(const string & fileName, Status& returnStatus)
     if ((status = db.openFile(fileName, filePtr)) == OK)
     {	
 	//cout<<"db openFile success\n";
-	/*status = filePtr->getFirstPage(headerPageNo);		//get the headerPage #
+	headerPageNo = -1;
+	status = filePtr->getFirstPage(headerPageNo);		//get the headerPage #
 	if(status != OK){ 
 		returnStatus = status;
 		return;
-	}*/
+	}
 	//cout<<"get header on page "<<headerPageNo<<" success\n";
-	headerPageNo = 1;
+	//headerPageNo = 1;
 	status = bufMgr->readPage(filePtr, headerPageNo, pagePtr);//read and pin the header page in bufPool
 	if(status != OK){
 		returnStatus = status;
@@ -267,7 +272,7 @@ const Status HeapFileScan::resetScan()
 const Status HeapFileScan::scanNext(RID& outRid)
 {
     Status 	status = OK;
-    RID		nextRid;
+//    RID		nextRid;
     RID		tmpRid;
     int 	nextPageNo;
     Record      rec;
@@ -470,7 +475,7 @@ const Status InsertFileScan::insertRecord(const Record & rec, RID& outRid)
         return INVALIDRECLEN;
     }
 
-    //the current page is not the last page of the file
+    //the current page is not the last page of the file, unpin it and bring in the last page
     if(curPageNo != headerPage->lastPage){
 	//unpin the current page
 	unpinstatus = bufMgr->unPinPage(filePtr, curPageNo, curDirtyFlag);
@@ -485,7 +490,7 @@ const Status InsertFileScan::insertRecord(const Record & rec, RID& outRid)
 	curRec = NULLRID;	
     }
     //try to insert
-    status = curPage->insertRecord(rec, outRid);
+    status = curPage->insertRecord(rec, rid);
     //if full, alloc a new page and insert the record into the new page
     if(status == NOSPACE){
 	//unpin the last page
@@ -497,6 +502,7 @@ const Status InsertFileScan::insertRecord(const Record & rec, RID& outRid)
 	if(status != OK) return status;
 	//init the page
 	newPage->init(newPageNo);
+	//set the next page parameter to link the new page together
 	newPage->setNextPage(curPageNo);
 	curPage->setNextPage(newPageNo);
 	//int testNo = -1;
@@ -515,12 +521,13 @@ const Status InsertFileScan::insertRecord(const Record & rec, RID& outRid)
 	curPageNo = newPageNo;
 	curRec = NULLRID;
 	//insert the record to the new page
-	status = curPage->insertRecord(rec, outRid);
+	status = curPage->insertRecord(rec, rid);
 	if(status != OK) cerr<<"New page is full, which is weird!"<<endl;
 	//update the rest cur para
 	//curRec = outRid;
 	//curDirtyFlag = true;
     }
+    outRid = rid;
     curRec = outRid;
     curDirtyFlag = true;
     if((status != OK) && (status != NOSPACE))	cerr<<"There is other status in insertion!";
