@@ -80,7 +80,7 @@ int main(int argc, char **argv)
         dbrec1.data = &rec1;
         dbrec1.length = sizeof(RECORD);
         status = iScan->insertRecord(dbrec1, newRid);
-
+//if(newRid.pageNo == 2 && newRid.slotNo == 0) {cout<<i<<endl;exit(1);}
 		// stash away rid and key of the record
 		ridArray[i] = newRid;
 		//printf("next rid (%d.%d)\n",ridArray[i].pageNo, ridArray[i].slotNo);
@@ -146,6 +146,7 @@ cout<<"------------------------------------insert part--------------------------
 		i = 0; 
 		while ((status = scan1->scanNext(rec2Rid)) != FILEEOF)
 		{
+			//if(rec2Rid.pageNo == 2 && rec2Rid.slotNo == 0) {scan1->deleteRecord();}
 			// reconstruct record i
 			sprintf(rec1.s, "This is record %05d", i);
     	    rec1.i = i;
@@ -245,6 +246,7 @@ cout<<"--------------------------------------first scan success-----------------
 		deleted = 0;
 		while ((status = scan1->scanNext(rec2Rid)) != FILEEOF)
 		{
+			//if(rec2Rid.pageNo == 2 && rec2Rid.slotNo == 0){scan1->deleteRecord();exit(1);}
 			// cout << "processing record " << i << i << endl;
 			if (status != OK) error.print(status);
 			if ((i % 2) != 0)
@@ -283,11 +285,16 @@ cout<<"-------------------------------------ABOVE SOUNDS CORRECT----------------
         scan1->startScan(0, 0, STRING, NULL, EQ);
         while ((status = scan1->scanNext(rec2Rid)) != FILEEOF)
         {
+		//if(rec2Rid.pageNo == 2 && rec2Rid.slotNo == 0){scan1->deleteRecord();exit(1);}
             if ( i > 0 ) // don't delete the first one
             {
+		//cout<<rec2Rid.pageNo<<", "<<rec2Rid.slotNo<<endl;
                 status = scan1->deleteRecord();
+		//if(rec2Rid.pageNo == 4) exit(1);
+		//error.print(status);
                 if ((status != OK) && ( status != NORECORDS))
                 {
+			//if(status == NORECORDS) cout<<"actually right!\n";
                     cout << "err0r status return from deleteRecord" << endl;
                     error.print(status);
                 }
@@ -309,7 +316,9 @@ cout<<"-------------------------------------ABOVE SOUNDS CORRECT----------------
         // delete the rest (should only be one)
         while ((status = scan1->scanNext(rec2Rid)) != FILEEOF)
         {
-		cout<<rec2Rid.pageNo<<", "<<rec2Rid.slotNo<<endl;	    
+		//error.print(status);
+		//cout<<rec2Rid.pageNo<<", "<<rec2Rid.slotNo<<endl;
+		cout<<"NOW!\n";	    
 	    status = scan1->deleteRecord();
             if ((status != OK) && ( status != NORECORDS))
             {
@@ -328,7 +337,7 @@ cout<<"-------------------------------------ABOVE SOUNDS CORRECT----------------
                  << " records!" << endl;
     }
 			
-exit(1);
+//exit(1);
 
     status = destroyHeapFile("dummy.02");
     if (status != OK) 
@@ -545,20 +554,22 @@ exit(1);
 
 
     // rescan.  should see 1000 fewer records
-
+cout<<"--------------------------------------------IOSLATION------------------------------------------\n";
     scan1 = new HeapFileScan("dummy.04", status);
     if (status != OK) error.print(status);
     scan1->startScan(0, 0, STRING, NULL, EQ);
     i = 0;
     while ((status = scan1->scanNext(rec2Rid)) != FILEEOF)
     {
+//	error.print(status);
+	//cout<<rec2Rid.pageNo<<": "<<rec2Rid.slotNo<<endl;
 	i++;
     }
     cout << "should have seen 1000 fewer records after deletions" << endl;
     cout << "saw " << i << "records" << endl;
     delete scan1;
 	
-
+cout<<"--------------------------------------------ISOLATION-------------------------------------------\n";
     // perform filtered scan #1
     scan1 = new HeapFileScan("dummy.04", status);
     if (status != OK) error.print(status);

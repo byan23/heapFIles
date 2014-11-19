@@ -98,7 +98,7 @@ const Status Page::insertRecord(const Record & rec, RID& rid)
 	tmpRid.pageNo = curPage;
 	tmpRid.slotNo = -i; // make a positive slot number
 	rid = tmpRid;
-
+//cout<<slot[0].length<<endl;
 	return OK;
     }
 }
@@ -110,7 +110,7 @@ const Status Page::insertRecord(const Record & rec, RID& rid)
 const Status Page::deleteRecord(const RID & rid)
 {
     int	slotNo = -rid.slotNo;   // convert to negative format
-cout<<slotNo<<", "<<slotCnt<<", "<<slot[slotNo].length<<endl;
+//cout<<curPage<<": "<<slotNo<<", "<<slotCnt<<", "<<slot[slotNo].length<<endl;
     // first check if the record being deleted is actually valid
     if ((slotNo > slotCnt) && (slot[slotNo].length > 0))
     {
@@ -199,9 +199,10 @@ const Status Page::firstRecord(RID& firstRid) const
 	if (slot[i].length == -1) i--;
 	else break;
     }
+	//cout<<curPage<<": "<<i<<" ==? "<<slotCnt<<endl;
     if ((i == slotCnt) || (slot[i].length == -1)) return NORECORDS;
     else
-    {
+    {	//cout<<"didn't return norecords!\n";
 	// found a non-empty slot
         tmpRid.pageNo = curPage;
         tmpRid.slotNo = -i;
@@ -225,6 +226,7 @@ const Status Page::nextRecord (const RID &curRid, RID& nextRid) const
 	if (slot[i].length == -1) i--;
 	else break;
     }
+	//cout<<curRid.pageNo<<", "<<curRid.slotNo<<": "<<slotCnt<<"; "<<slot[i].length<<endl;
     if ((i <= slotCnt) || (slot[i].length == -1)) return ENDOFPAGE;
     else
     {

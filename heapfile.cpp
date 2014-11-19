@@ -282,7 +282,9 @@ const Status HeapFileScan::scanNext(RID& outRid)
     }
     else{
 	//cout<<"here we are!\n";
+	//cout<<"current record is "<<curRec.pageNo<<", "<<curRec.slotNo<<endl;
 	status = curPage->nextRecord(curRec, tmpRid);
+	//cout<<"the next record is "<<tmpRid.pageNo<<", "<<tmpRid.slotNo<<endl;
     }
 	//curRec = tmpRid;
 	//cout<<tmpRid.pageNo<<", "<<curRec.slotNo<<endl; exit(1);
@@ -291,6 +293,7 @@ const Status HeapFileScan::scanNext(RID& outRid)
 	while(curPageNo != headerPage->lastPage){
 		//cout<<"In page "<<nextPageNo<<", "<<curPageNo<<endl;
 		while(status != ENDOFPAGE){
+			//cout<<"not end of page!\n";
 			//convert curRec to a rec
 			curRec = tmpRid;
 			//cout<<"is scanning the page "<<tmpRid.pageNo<<", "<<tmpRid.slotNo<<endl;
@@ -306,24 +309,30 @@ const Status HeapFileScan::scanNext(RID& outRid)
 			
 		}
 		//all records on the page have been processed, unpin page
-		status = bufMgr->unPinPage(filePtr, curPageNo, curDirtyFlag);
-		if(status != OK) return status;
-		status = curPage->getNextPage(nextPageNo);
-		if(status != OK) cerr<<"next page error!\n";
-		//cout<<curPageNo<<", "<<nextPageNo<<endl;
-		//read in the next page, update cur para
-		status = bufMgr->readPage(filePtr, nextPageNo, newPage);
-		if(status != OK) return status;
-		curPageNo = nextPageNo;
-		//cout<<curPageNo<<"; "<<nextPageNo<<endl;
-		curPage = newPage;
-		curDirtyFlag = false;
-		status = curPage->firstRecord(tmpRid);
-		if(status != OK) return status;
+		do{
+			status = bufMgr->unPinPage(filePtr, curPageNo, curDirtyFlag);
+			if(status != OK) return status;
+			status = curPage->getNextPage(nextPageNo);
+			if(status != OK) cerr<<"next page error!\n";
+			//cout<<"next page no: "<<nextPageNo<<endl;
+			//cout<<"last page no: "<<headerPage->lastPage<<endl;
+			//read in the next page, update cur para
+			status = bufMgr->readPage(filePtr, nextPageNo, newPage);
+			if(status != OK) return status;
+			curPageNo = nextPageNo;
+			//cout<<"read page success!\n";
+			//cout<<curPageNo<<"; "<<nextPageNo<<endl;
+			curPage = newPage;
+			curDirtyFlag = false;
+			status = curPage->firstRecord(tmpRid);
+		} while(status == NORECORDS && curPageNo != headerPage->lastPage);
+			
+		if((status != OK) && (status != NORECORDS)){ cerr<<"more than norecords!"; return status; }
+		//cout<<"get new record!\n";
 	}
     }
     //if curPage is the last page or prev pages are all processed
-    while(status != ENDOFPAGE){
+    while((status != ENDOFPAGE) && (status != NORECORDS)){
 	//convert curRec to a rec
 	//cout<<"last page is "<<curPageNo<<endl;
 	curRec = tmpRid;
