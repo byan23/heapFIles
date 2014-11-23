@@ -318,7 +318,7 @@ cout<<"-------------------------------------ABOVE SOUNDS CORRECT----------------
         {
 		//error.print(status);
 		//cout<<rec2Rid.pageNo<<", "<<rec2Rid.slotNo<<endl;
-		cout<<"NOW!\n";	    
+		//cout<<"NOW!\n";	    
 	    status = scan1->deleteRecord();
             if ((status != OK) && ( status != NORECORDS))
             {
